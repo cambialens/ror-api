@@ -20,3 +20,4 @@ boto3
 localstack
 localstack_client
 update_address @ git+https://github.com/ror-community/update_address.git
+zenodo-client==0.2.0

@@ -256,7 +256,7 @@ if DATA['DATA_STORE']:
         #DATA['CLIENT'] = localboto3.client('s3')
         #DATA['OBJECT'] = DATA['CLIENT'].list_objects_v2(Bucket = DATA['DATA_STORE'])
 else:
-    print("Please set the DATA_STORE environment variable or run this codebase through docker compose")
+    print("Not using S3 DATA_STORE to index custom ROR dataset")
 
 DATA['DIR'] = os.path.join(BASE_DIR, 'rorapi', 'data')
 ROR_API = {'PAGE_SIZE': 20, 'ID_PREFIX': 'https://ror.org/'}

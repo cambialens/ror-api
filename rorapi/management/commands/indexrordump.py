@@ -9,8 +9,8 @@ from rorapi.settings import ES, ES_VARS, ROR_DUMP, DATA
 
 from django.core.management.base import BaseCommand
 from elasticsearch import TransportError
+from zenodo_client import Zenodo
 
-HEADERS = {'Authorization': 'token {}'.format(ROR_DUMP['GITHUB_TOKEN']), 'Accept': 'application/vnd.github.v3+json'}
 
 def get_nested_names(org):
     yield org['name']
@@ -32,46 +32,33 @@ def get_nested_ids(org):
             for eid in ext_id['all']:
                 yield eid
 
-def get_ror_dump_sha(filename):
-    sha = ''
-    contents_url = ROR_DUMP['REPO_URL'] + '/contents'
-    try:
-        response = requests.get(contents_url, headers=HEADERS)
-    except requests.exceptions.RequestException as e:
-        raise SystemExit(f"{contents_url}: is Not reachable \nErr: {e}")
-    try:
-        repo_contents = response.json()
-        for file in repo_contents:
-            if filename in file['name']:
-                sha = file['sha']
-        return sha
-    except:
-        return None
 
-def get_ror_dump_zip(filename):
-    sha = get_ror_dump_sha(filename)
-    if sha:
-        blob_url = ROR_DUMP['REPO_URL'] + '/git/blobs/' + sha
-        try:
-            response = requests.get(blob_url, headers=HEADERS)
-        except requests.exceptions.RequestException as e:
-            raise SystemExit(f"Github blob is Not reachable \nErr: {e}")
-        try:
-            response_json = response.json()
-            file_decoded = base64.b64decode(response_json['content'])
-            with open(filename + '.zip', 'wb') as zip_file:
-                zip_file.write(file_decoded)
-            return zip_file.name
-        except:
-            return None
+def get_ror_filename(ror_zenodo_id: str):
+    zenodo = Zenodo()
+    latest_record_id = zenodo.get_latest_record(ror_zenodo_id)
+    zenodo_json = zenodo.get_record(latest_record_id).json()
+    return zenodo_json['files'][0]['key']
+
+
+def get_ror_dump_zip(ror_zenodo_id: str):
+    filename_zip = get_ror_filename(ror_zenodo_id)
+    if filename_zip:
+        zenodo = Zenodo()
+        latest_record_id = zenodo.get_latest_record(ror_zenodo_id)
+        download_path = zenodo.download(latest_record_id, filename_zip)
+        return download_path
+
 
 class Command(BaseCommand):
     help = 'Indexes ROR dataset from a full dump file in ror-data repo'
 
     def handle(self, *args, **options):
         json_file = ''
-        filename = options['filename']
-        ror_dump_zip = get_ror_dump_zip(filename)
+        ror_zenodo_id = options['zenodo_id']
+
+        filename_zip = get_ror_filename(ror_zenodo_id)
+        filename = filename_zip.replace('.json.zip', '')
+        ror_dump_zip = get_ror_dump_zip(ror_zenodo_id)
         if ror_dump_zip:
             if not os.path.exists(DATA['WORKING_DIR']):
                 os.makedirs(DATA['WORKING_DIR'])
