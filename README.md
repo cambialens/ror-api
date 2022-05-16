@@ -205,16 +205,17 @@ If you require a hard decision about which organizations are mentioned in the gi
    docker-compose up -d
 
 3. Index the latest ROR dataset from zenodo
-
+```sh
    ror_zenodo_id=`curl -s 'https://zenodo.org/api/records/?communities=ror-data&sort=mostrecent' | jq -r '.hits.hits[0].conceptrecid'`
    docker-compose exec web python manage.py setup $ror_zenodo_id
-
+```
 *Note: You must specify a dataset that exists in [zenodo](https://zenodo.org/communities/ror-data)*
 
 4. <http://localhost:9292/organizations?affiliation=University%20of%20Freiburg>
 
 5. Optionally, run tests
-
+```sh
    docker-compose exec web python manage.py test rorapi.tests
    docker-compose exec web python manage.py test rorapi.tests_integration
    docker-compose exec web python manage.py test rorapi.tests_functional
+```
