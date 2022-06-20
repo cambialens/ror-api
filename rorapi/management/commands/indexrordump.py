@@ -37,7 +37,8 @@ def get_ror_filename(ror_zenodo_id: str):
     zenodo = Zenodo()
     latest_record_id = zenodo.get_latest_record(ror_zenodo_id)
     zenodo_json = zenodo.get_record(latest_record_id).json()
-    return zenodo_json['files'][0]['key']
+    zenodo_ror_files = zenodo_json['files']
+    return zenodo_ror_files[len(zenodo_ror_files)-1]['key']
 
 
 def get_ror_dump_zip(ror_zenodo_id: str):
